@@ -10,12 +10,64 @@ A RESTful authentication API built with **FastAPI** that demonstrates secure use
 This project was built to better understand authentication, password security, and how cryptographic concepts such as hashing and digital signatures are applied in modern backend development.
 
 ---
+# API Preview
+
+## Interactive API Documentation
+
+FastAPI automatically generates interactive API documentation using Swagger UI, allowing every endpoint to be tested directly from the browser.
+
+<p align="center">
+  <img src="images/swagger-overview.png" width="95%">
+</p>
+
+---
+
+## User Registration
+
+New users can register by providing an email address and password. Before storing the credentials, the password is securely hashed using **bcrypt**, ensuring that plain-text passwords are never saved in the database.
+
+<p align="center">
+  <img src="images/register.png" width="90%">
+</p>
+
+---
+
+## JWT Authentication
+
+After successful authentication, the API issues a signed **JWT access token** together with a **refresh token**. The access token is used to authenticate future requests, while the refresh token can be exchanged for a new access token when it expires.
+
+<p align="center">
+  <img src="images/jwt-login.png" width="90%">
+</p>
+
+---
+
+## Authorizing Requests
+
+Swagger UI includes built-in OAuth2 support. After logging in, the generated JWT can be applied directly to authenticated endpoints through the **Authorize** dialog.
+
+<p align="center">
+  <img src="images/authorize.png" width="70%">
+</p>
+
+---
+
+## Accessing Protected Endpoints
+
+Protected routes require a valid JWT in the `Authorization: Bearer <token>` header. Once authenticated, users can access endpoints such as `/me` to retrieve their account information.
+
+<p align="center">
+  <img src="images/protected-route.png" width="90%">
+</p>
+
+---
 
 # Features
 
 - User registration
-- Secure user login
+- Secure user login with OAuth2 Password Flow
 - JWT access token generation
+- Refresh token support
 - Password hashing using bcrypt
 - SQLite database with SQLAlchemy ORM
 - Protected API endpoints
@@ -147,8 +199,9 @@ The API consists of three main components:
 
 # API Endpoints
 - POST | `/register` | Register a new user |
-- POST | `/login` | Authenticate a user and receive a JWT |
-- GET | `/me` *(or protected endpoint)* | Access a protected resource using a valid JWT |
+- POST | `/token` | Authenticate user and receive JWT tokens |
+- GET | `/me` | Retrieve the authenticated user's profile |
+- POST | `/refresh` | Generate a new access token using a refresh token |
 
 > Endpoint names may vary depending on your implementation.
 
@@ -166,26 +219,30 @@ The authentication process follows these steps:
 6. Protected endpoints verify the JWT before granting access.
 
 ```text
-Client
-   │
-   │ Register/Login
-   ▼
-FastAPI
-   │
-   ├── Hash password (bcrypt)
-   ├── Verify credentials
-   └── Generate JWT
-          │
-          ▼
-      Access Token
-          │
-          ▼
-Client stores token
-          │
-Authorization: Bearer <token>
-          │
-          ▼
-Protected Endpoint
+                  Register
+                      │
+                      ▼
+             Password hashed (bcrypt)
+                      │
+                      ▼
+                   SQLite
+                      │
+                      ▼
+                    Login
+                      │
+                      ▼
+         Generate Access + Refresh JWT
+                      │
+                      ▼
+      Authorization: Bearer <access_token>
+                      │
+                      ▼
+          Access Protected Endpoints
+                      │
+          (Access Token Expires)
+                      │
+                      ▼
+       POST /refresh → New Access Token
 ```
 
 ---
